@@ -48,7 +48,7 @@ func (d *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		// file
 		if part.FormName() == "file" {
 			cat.File.Name = part.FileName()
-			cat.File.Path = r.URL.Path + string(os.PathSeparator) + cat.File.Name
+			cat.File.Path = "https://warm-lake-07008.herokuapp.com/files/categories/" + cat.File.Name
 			cat.File.Extension = path.Ext(part.FileName())
 			switch ext := cat.File.Extension; ext {
 			case ".jpg", ".JPG", ".png", ".PNG":
