@@ -48,12 +48,12 @@ func GetPasswordByUsernameOrEmail(client *mongo.Client, db string, username stri
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	collection := client.Database(db).Collection(CollectionUsers)
-	result := User{}
-	if err := collection.FindOne(ctx, bson.M{"username": username}).Decode(&result); err == nil {
-		return result.Password, nil
+	user := User{}
+	if err := collection.FindOne(ctx, bson.M{"username": username}).Decode(&user); err == nil {
+		return user.Password, nil
 	}
-	if err := collection.FindOne(ctx, bson.M{"email": username}).Decode(&result); err == nil {
-		return result.Password, nil
+	if err := collection.FindOne(ctx, bson.M{"email": username}).Decode(&user); err == nil {
+		return user.Password, nil
 	}
 	return "", ErrFindUser
 }

@@ -111,3 +111,12 @@ func RenewJWT(w http.ResponseWriter, r *http.Request, tknStr string) (string, er
 	}
 	return tokenString, nil
 }
+func GetUsernameFromJWT(tkn string) (string, error) {
+	claims := &Claims{}
+	if _, err := jwt.ParseWithClaims(tkn, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	}); err != nil {
+		return "", err
+	}
+	return claims.Username, nil
+}

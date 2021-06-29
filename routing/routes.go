@@ -23,7 +23,7 @@ func initRoutes(handler handlers.Handler) Routes {
 			"GET",
 			"/api/v1/recipes",
 			false,
-			handler.ListRecipes,
+			handler.GetListOfRecipes,
 		},
 		Route{
 			"CreateRecipe",
@@ -56,16 +56,23 @@ func initRoutes(handler handlers.Handler) Routes {
 		Route{
 			"ListCategories",
 			"GET",
-			"/api/v1/categories",
+			"/api/v1/category",
 			false,
-			handler.ListCategories,
+			handler.GetListOfCategories,
 		},
 		Route{
 			"CreateCategory",
 			"POST",
-			"/api/v1/categories",
+			"/api/v1/category",
 			false,
 			handler.CreateCategory,
+		},
+		Route{
+			"GetCategoryByID",
+			"GET",
+			"/api/v1/category/{id}",
+			false,
+			handler.GetCategoryByID,
 		},
 	}
 }

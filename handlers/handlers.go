@@ -14,29 +14,35 @@ type Handler struct {
 	Client       *mongo.Client
 	DatabaseName string
 }
+type JWT struct {
+	Token    string
+	Username string
+}
 type Pagination struct {
 	Data          interface{} `json:"data"`
-	Limit         int         `json:"limit"`
-	Page          int         `json:"page"`
-	TotalElements int         `json:"totalElements"`
+	Limit         string      `json:"limit"`
+	Page          string      `json:"page"`
+	TotalElements int64       `json:"totalElements"`
 }
 
 func Authenticate(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch mux.CurrentRoute(r).GetName() {
-		case "CreateRecipe", "ListRecipes", "Renew", "CreateCategory":
-			fmt.Println("Auth required!")
+		case "CreateRecipe", "ListRecipes", "Renew", "CreateCategory": //Todo
 			tkn, err := lib.VerifyAndReturnJWT(w, r)
 			if err != nil {
 				fmt.Println("Error verify token:", err)
 				return
 			}
-			if mux.CurrentRoute(r).GetName() == "Renew" {
-				ctx := context.WithValue(r.Context(), "token", tkn)
-				rWithCtx := r.WithContext(ctx)
-				h.ServeHTTP(w, rWithCtx)
+			username, err := lib.GetUsernameFromJWT(tkn)
+			if err != nil {
+				fmt.Println("Error get username from token:", err)
 				return
 			}
+			ctx := context.WithValue(r.Context(), "token", JWT{Token: tkn, Username: username})
+			rWithCtx := r.WithContext(ctx)
+			h.ServeHTTP(w, rWithCtx)
+			return
 		}
 		h.ServeHTTP(w, r)
 	})

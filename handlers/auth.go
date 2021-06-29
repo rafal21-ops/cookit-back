@@ -36,7 +36,7 @@ func (d *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	expirationTime := time.Now().Add(60 * time.Minute)
+	expirationTime := time.Now().Add(5 * time.Minute)
 	tokenString, err := lib.CreateJWT(login.Username, expirationTime)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -55,7 +55,7 @@ func (d *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(cred)
 	if err != nil {
 		// If there is something wrong with the request body, return a 400 status
-		log.Println("Failed to decode body", err)
+		log.Println("Failed to decode body:", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -77,19 +77,18 @@ func (d *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	http.Redirect(w, r, "/v1/login", http.StatusCreated)
+	http.Redirect(w, r, "/api/v1/login", http.StatusCreated)
 }
 func (d *Handler) Renew(w http.ResponseWriter, r *http.Request) {
-	tkn := r.Context().Value("token").(string)
-	fmt.Println("Token to renew:", tkn)
-	newTokenString, err := lib.RenewJWT(w, r, tkn)
+	tkn := r.Context().Value("token").(JWT)
+	newToken, err := lib.RenewJWT(w, r, tkn.Token)
 	if err != nil {
 		fmt.Println("Failed to renew token:", err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(lib.Token{
-		Token: newTokenString,
+		Token: newToken,
 	}); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

@@ -3,12 +3,13 @@ package models
 import (
 	"context"
 	"errors"
-	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/Daniorocket/cookit-back/lib"
 	"github.com/globalsign/mgo/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var CollectionCategory = "categories"
@@ -22,25 +23,38 @@ type Category struct {
 	File    lib.File `json:"file" bson:"file"`
 }
 
-func GetAllCategories(client *mongo.Client, db string) ([]Category, error) {
+func GetAllCategories(client *mongo.Client, db, page, limit string) ([]Category, int64, error) {
+	var category Category
 	categories := []Category{}
+	p, err := strconv.Atoi(page)
+	if err != nil {
+		return nil, 0, err
+	}
+	l, err := strconv.Atoi(limit)
+	if err != nil {
+		return nil, 0, err
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	collection := client.Database(db).Collection(CollectionCategory)
-	cursor, err := collection.Find(ctx, bson.M{})
+	findOptions := options.Find()
+	findOptions.SetLimit(int64(l))
+	findOptions.SetSkip(int64((p - 1) * l))
+	cursor, err := collection.Find(ctx, bson.M{}, findOptions)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	for cursor.Next(ctx) {
-		var category Category
 		if err = cursor.Decode(&category); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
-		fmt.Println("Category:", category)
 		categories = append(categories, category)
 	}
-	fmt.Println("Categories:", categories)
-	return categories, nil
+	totalElements, err := collection.CountDocuments(ctx, bson.M{}, nil)
+	if err != nil {
+		return nil, 0, err
+	}
+	return categories, totalElements, nil
 }
 func CreateCategory(client *mongo.Client, db string, category Category) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -50,4 +64,15 @@ func CreateCategory(client *mongo.Client, db string, category Category) error {
 		return ErrCreateCategory
 	}
 	return nil
+}
+func GetCategoryByID(client *mongo.Client, db, id string) (Category, error) {
+	var category Category
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	collection := client.Database(db).Collection(CollectionCategory)
+	cursor := collection.FindOne(ctx, bson.M{"id": id})
+	if err := cursor.Decode(&category); err != nil {
+		return Category{}, err
+	}
+	return category, nil
 }
