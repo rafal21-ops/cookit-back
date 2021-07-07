@@ -2,7 +2,6 @@ package routing
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -33,28 +32,57 @@ func NewRouter() (*mux.Router, error) {
 	}
 	collection := client.Database("CookIt").Collection("users")
 	//Index for users
-	keysUser := []string{"id", "email", "username"}
-	for i := range keysUser {
-		indexName, err := collection.Indexes().CreateOne(
+	keys := []string{"id", "email", "username"}
+	for i := range keys {
+		if _, err := collection.Indexes().CreateOne(
 			context.Background(),
 			mongo.IndexModel{
 				Keys: bson.M{
-					keysUser[i]: 1,
+					keys[i]: 1,
 				},
 				Options: options.Index().SetUnique(true).SetBackground(true).SetSparse(true),
 			},
-		)
-		if err != nil {
-			log.Fatal(err)
+		); err != nil {
+			return nil, err
 		}
-		fmt.Println(indexName)
+	}
+	collection = client.Database("CookIt").Collection("recipes")
+	//Index for recipes
+	keys = []string{"id"}
+	for i := range keys {
+		if _, err := collection.Indexes().CreateOne(
+			context.Background(),
+			mongo.IndexModel{
+				Keys: bson.M{
+					keys[i]: 1,
+				},
+				Options: options.Index().SetUnique(true).SetBackground(true).SetSparse(true),
+			},
+		); err != nil {
+			return nil, err
+		}
+	}
+	collection = client.Database("CookIt").Collection("categories")
+	//Index for categories
+	keys = []string{"id", "label_pl", "label_en"}
+	for i := range keys {
+		if _, err := collection.Indexes().CreateOne(
+			context.Background(),
+			mongo.IndexModel{
+				Keys: bson.M{
+					keys[i]: 1,
+				},
+				Options: options.Index().SetUnique(true).SetBackground(true).SetSparse(true),
+			},
+		); err != nil {
+			return nil, err
+		}
 	}
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range initRoutes(handler) {
 		var handler http.Handler
 		handler = route.HandlerFunc
 		handler = logger.Logger(handler, route.Name)
-
 		router.
 			Methods(route.Method).
 			Path(route.Pattern).
