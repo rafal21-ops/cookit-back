@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -11,9 +10,6 @@ import (
 	"github.com/Daniorocket/cookit-back/routing"
 )
 
-func hello(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, "Hello World")
-}
 func main() {
 	port := os.Getenv("PORT")
 	router, err := routing.NewRouter()
@@ -22,12 +18,9 @@ func main() {
 		return
 	}
 	router.Use(handlers.Authenticate)
-
-	fmt.Println("Server started!")
-	log.Print("Listening on :" + port)
+	fmt.Println("Server started!\nListening on :" + port)
 	if err = http.ListenAndServe(":"+port, router); err != nil {
 		log.Println("Failed to close server: ", err)
 		return
 	}
-
 }

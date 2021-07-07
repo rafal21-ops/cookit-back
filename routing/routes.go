@@ -74,5 +74,12 @@ func initRoutes(handler handlers.Handler) Routes {
 			false,
 			handler.GetCategoryByID,
 		},
+		Route{
+			"GetRecipesByTags",
+			"GET",
+			"/api/v1/recipes/tags",
+			false,
+			handler.GetListOfRecipesByTags,
+		},
 	}
 }
